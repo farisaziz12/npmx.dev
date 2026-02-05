@@ -15,16 +15,23 @@ const orgName = computed(() => route.params.org)
 
 const { isConnected } = useConnector()
 
-// Fetch all packages in this org using the org packages API
-const { data: results, status, error } = await useOrgPackages(orgName)
+// Fetch all packages in this org using the org packages API (lazy to not block navigation)
+const { data: results, status, error } = useOrgPackages(orgName)
 
-if (status.value === 'error' && error.value?.statusCode === 404) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: $t('org.page.not_found'),
-    message: $t('org.page.not_found_message', { name: orgName.value }),
-  })
-}
+// Handle 404 errors reactively (since we're not awaiting)
+watch(
+  [status, error],
+  ([newStatus, newError]) => {
+    if (newStatus === 'error' && newError?.statusCode === 404) {
+      showError({
+        statusCode: 404,
+        statusMessage: $t('org.page.not_found'),
+        message: $t('org.page.not_found_message', { name: orgName.value }),
+      })
+    }
+  },
+  { immediate: true },
+)
 
 const packages = computed(() => results.value?.objects ?? [])
 const packageCount = computed(() => packages.value.length)
