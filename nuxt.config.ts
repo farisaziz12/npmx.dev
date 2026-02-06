@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { currentLocales } from './config/i18n'
+import { isCI, provider } from 'std-env'
 
 export default defineNuxtConfig({
   modules: [
@@ -195,6 +196,7 @@ export default defineNuxtConfig({
   },
 
   htmlValidator: {
+    enabled: !isCI || (provider !== 'vercel' && !!process.env.VALIDATE_HTML),
     failOnError: true,
   },
 
